@@ -1,0 +1,7 @@
+{
+  "name": "AI Legal First Aid",
+  "description": "A premium AI-powered legal awareness assistant providing summaries, rights analysis, and next steps using advanced Gemini models.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

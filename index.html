@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Legal First Aid</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script type="importmap">
+    {
+      "imports": {
+        "@google/genai": "https://aistudiocdn.com/@google/genai@^1.32.0"
+      }
+    }
+    </script>
+    <style>
+        /* RESET & GLOBAL OVERRIDES */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f2f4f7 !important;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* APP CONTAINER - SCOPED STYLING */
+        #legal-app {
+            max-width: 900px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding: 40px 20px;
+            background-color: #f2f4f7;
+            color: #1e293b;
+            box-sizing: border-box;
+        }
+
+        #legal-app * {
+            box-sizing: border-box;
+        }
+
+        /* TYPOGRAPHY */
+        #legal-app h1, #legal-app h2, #legal-app h3 {
+            font-family: 'Playfair Display', serif;
+            color: #0f172a; /* Navy 900 */
+        }
+
+        #legal-app h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-align: center;
+            letter-spacing: -0.02em;
+        }
+
+        #legal-app .subtitle {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        /* EXAMPLE CHIPS */
+        #legal-app .examples-section {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        #legal-app .examples-label {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 0.75rem;
+        }
+
+        #legal-app .examples-grid {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        #legal-app .example-chip {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+            padding: 0.6rem 1.2rem;
+            border-radius: 24px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        #legal-app .example-chip:hover {
+            border-color: #d97706;
+            color: #d97706;
+            background: #fffbf0;
+            transform: translateY(-1px);
+        }
+
+        /* CARDS & CONTAINERS */
+        #legal-app .card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* INPUTS */
+        #legal-app label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: #334155;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        #legal-app .textarea-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        #legal-app textarea {
+            width: 100%;
+            height: 180px;
+            padding: 1rem;
+            padding-bottom: 3rem; /* Space for mic button */
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #0f172a;
+            resize: none;
+            transition: all 0.2s ease;
+            outline: none;
+            background: #f8fafc;
+        }
+
+        #legal-app textarea:focus {
+            border-color: #d97706; /* Gold 500 */
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.1);
+        }
+
+        /* MIC BUTTON */
+        #legal-app .mic-btn {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: #f1f5f9;
+            color: #64748b;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+
+        #legal-app .mic-btn:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        #legal-app .mic-btn.listening {
+            background: #fee2e2;
+            color: #ef4444;
+            animation: pulse 1.5s infinite;
+        }
+
+        /* FILE UPLOAD */
+        #legal-app .file-upload {
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #f8fafc;
+            position: relative;
+        }
+
+        #legal-app .file-upload:hover {
+            border-color: #d97706;
+            background: #fffbf0;
+        }
+
+        #legal-app .file-upload input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        #legal-app .file-icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 1rem;
+            color: #94a3b8;
+        }
+
+        #legal-app .file-upload:hover .file-icon {
+            color: #d97706;
+        }
+
+        #legal-app .file-list {
+            margin-top: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        #legal-app .file-tag {
+            background: #f1f5f9;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* BUTTONS */
+        #legal-app .btn-primary {
+            width: 100%;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #fff;
+            border: none;
+            padding: 1.25rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.1s ease, box-shadow 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.2);
+        }
+
+        #legal-app .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px -3px rgba(15, 23, 42, 0.3);
+        }
+
+        #legal-app .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        #legal-app .btn-primary:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* RESULTS SECTION */
+        #legal-app .result-box {
+            display: none; /* Hidden by default */
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        #legal-app .result-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 1rem;
+        }
+
+        #legal-app .result-icon {
+            color: #d97706;
+            width: 32px;
+            height: 32px;
+        }
+
+        #legal-app .content-block {
+            margin-bottom: 2rem;
+        }
+
+        #legal-app .content-block h3 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        #legal-app .content-block ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #legal-app .content-block li {
+            position: relative;
+            padding-left: 1.75rem;
+            margin-bottom: 0.75rem;
+            line-height: 1.6;
+        }
+
+        #legal-app .content-block li::before {
+            content: "•";
+            color: #d97706;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.2rem;
+            top: -2px;
+        }
+
+        /* LOADING OVERLAY */
+        #legal-app .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        #legal-app .loading-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        #legal-app .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #d97706;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        /* FOOTER */
+        #legal-app .footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e2e8f0;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        #legal-app .disclaimer {
+            background: #fffbf0;
+            border: 1px solid #fde68a;
+            color: #92400e;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+        }
+
+        /* ANIMATIONS */
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+
+    </style>
+</head>
+<body>
+
+<div id="legal-app">
+    <!-- Header -->
+    <header>
+        <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
+            <svg class="result-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+            </svg>
+        </div>
+        <h1>AI Legal First Aid</h1>
+        <p class="subtitle">Rights Awareness & Immediate Next Steps</p>
+    </header>
+
+    <!-- Example Prompts -->
+    <div class="examples-section">
+        <p class="examples-label">Try an example scenario:</p>
+        <div class="examples-grid">
+            <button class="example-chip" onclick="useExample(1)">
+                <span>🚗</span> Traffic Accident
+            </button>
+            <button class="example-chip" onclick="useExample(2)">
+                <span>🏠</span> Landlord Dispute
+            </button>
+            <button class="example-chip" onclick="useExample(3)">
+                <span>📦</span> Defective Product
+            </button>
+        </div>
+    </div>
+
+    <!-- Input Section -->
+    <div class="card">
+        <label for="situation">Describe the Situation</label>
+        <div class="textarea-wrapper">
+            <textarea id="situationInput" placeholder="Describe what happened, who is involved, and what you need help with..."></textarea>
+            <button id="micBtn" class="mic-btn" title="Speak">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                </svg>
+            </button>
+        </div>
+        
+        <div style="margin-top: 1.5rem;">
+            <label>Evidence (Optional)</label>
+            <div class="file-upload" id="dropZone">
+                <input type="file" id="fileInput" multiple accept="image/*,application/pdf,text/*">
+                <svg class="file-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <p style="margin: 0; color: #64748b; font-weight: 500;">Click to upload or drag files here</p>
+                <p style="margin: 0.25rem 0 0; color: #94a3b8; font-size: 0.85rem;">Images, PDF, Text</p>
+            </div>
+            <div id="fileList" class="file-list"></div>
+        </div>
+
+        <div style="margin-top: 2rem;">
+            <button id="analyzeBtn" class="btn-primary">
+                Analyze My Situation
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" style="width: 20px;">
+                    <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div id="resultBox" class="card result-box">
+        <div class="result-header">
+            <svg class="result-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h2 style="margin: 0; font-size: 1.5rem;">Assessment</h2>
+        </div>
+        
+        <div class="content-block">
+            <h3 style="color: #0f172a;">Summary</h3>
+            <p id="resSummary" style="color: #475569; line-height: 1.7;"></p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
+            <div class="content-block">
+                <h3 style="color: #b45309;">
+                    <svg xmlns="http://www.w3.org/2000/svg" style="width: 20px;" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/></svg>
+                    Potential Rights
+                </h3>
+                <ul id="resRights"></ul>
+            </div>
+
+            <div class="content-block">
+                <h3 style="color: #059669;">
+                    <svg xmlns="http://www.w3.org/2000/svg" style="width: 20px;" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" /></svg>
+                    Recommended Actions
+                </h3>
+                <ul id="resSteps"></ul>
+            </div>
+        </div>
+
+        <div class="disclaimer">
+            <svg xmlns="http://www.w3.org/2000/svg" style="width: 24px; min-width: 24px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span id="resDisclaimer"></span>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>© 2024 AI Legal First Aid. Powered by Gemini.</p>
+        <p><strong>Disclaimer:</strong> This tool provides general legal information only. It is NOT legal advice and does not create an attorney-client relationship. Always consult a qualified lawyer for your specific situation.</p>
+    </footer>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <h3 style="color: #0f172a;">Analyzing Situation...</h3>
+        <p style="color: #64748b;">Consulting legal knowledge base</p>
+    </div>
+</div>
+
+<script type="module">
+    import { GoogleGenAI } from "@google/genai";
+
+    const state = {
+        files: [],
+        isLoading: false,
+        isListening: false
+    };
+
+    // DOM Elements
+    const els = {
+        input: document.getElementById('situationInput'),
+        micBtn: document.getElementById('micBtn'),
+        fileInput: document.getElementById('fileInput'),
+        fileList: document.getElementById('fileList'),
+        analyzeBtn: document.getElementById('analyzeBtn'),
+        loading: document.getElementById('loadingOverlay'),
+        resultBox: document.getElementById('resultBox'),
+        summary: document.getElementById('resSummary'),
+        rights: document.getElementById('resRights'),
+        steps: document.getElementById('resSteps'),
+        disclaimer: document.getElementById('resDisclaimer')
+    };
+
+    // --- Example Prompts ---
+    const examples = {
+        1: "I was hit by a car while crossing the street at a green light. The driver was speeding and refused to stop. I have minor injuries and a broken phone.",
+        2: "My landlord is refusing to return my security deposit of ₹20,000, claiming 'painting charges' even though I left the apartment in good condition.",
+        3: "I bought a refrigerator online 2 weeks ago. It stopped cooling yesterday. The seller says 'no returns' even though it's under warranty."
+    };
+
+    window.useExample = (id) => {
+        els.input.value = examples[id];
+        els.input.focus();
+    };
+
+    // --- Voice Input ---
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+
+    if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.lang = 'en-IN'; // Defaulting to Indian context as per app theme
+        recognition.interimResults = false;
+
+        recognition.onstart = () => {
+            state.isListening = true;
+            els.micBtn.classList.add('listening');
+        };
+
+        recognition.onend = () => {
+            state.isListening = false;
+            els.micBtn.classList.remove('listening');
+        };
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            const currentText = els.input.value;
+            // Append with space if needed
+            els.input.value = currentText + (currentText.length > 0 ? ' ' : '') + transcript;
+        };
+
+        els.micBtn.addEventListener('click', () => {
+            if (state.isListening) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        });
+    } else {
+        els.micBtn.style.display = 'none'; // Hide if not supported
+    }
+
+
+    // --- File Handling ---
+    els.fileInput.addEventListener('change', async (e) => {
+        const newFiles = Array.from(e.target.files);
+        for (const file of newFiles) {
+            const base64 = await readFileAsBase64(file);
+            state.files.push({ file, base64 });
