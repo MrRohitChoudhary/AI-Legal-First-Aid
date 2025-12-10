@@ -33,6 +33,7 @@
             background-color: #f2f4f7;
             color: #1e293b;
             box-sizing: border-box;
+            position: relative; /* For absolute positioning of children */
         }
 
         #legal-app * {
@@ -152,7 +153,7 @@
             box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.1);
         }
 
-        /* MIC BUTTON */
+        /* MIC BUTTON (TEXT INPUT) */
         #legal-app .mic-btn {
             position: absolute;
             bottom: 12px;
@@ -388,10 +389,139 @@
             align-items: flex-start;
         }
 
+        /* --- LIVE ASSISTANT STYLES --- */
+        #legal-app .live-fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 60px;
+            height: 60px;
+            border-radius: 30px;
+            background: #d97706;
+            color: white;
+            border: none;
+            box-shadow: 0 8px 24px rgba(217, 119, 6, 0.4);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 2000;
+        }
+
+        #legal-app .live-fab:hover {
+            transform: scale(1.1);
+            background: #b45309;
+        }
+
+        #legal-app .live-fab svg {
+            width: 28px;
+            height: 28px;
+        }
+
+        #legal-app .live-interface {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 360px;
+            height: 520px;
+            background: #0f172a;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 2001;
+            transform-origin: bottom right;
+            animation: expandLive 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        #legal-app .live-header {
+            padding: 1rem;
+            background: rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            z-index: 2;
+        }
+
+        #legal-app .live-video-container {
+            flex: 1;
+            position: relative;
+            background: #000;
+            overflow: hidden;
+        }
+
+        #legal-app #liveVideo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* Mirror effect */
+        }
+        
+        #legal-app .voice-indicator {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            z-index: 3;
+        }
+
+        #legal-app .voice-bar {
+            width: 0%;
+            height: 100%;
+            background: #d97706;
+            transition: width 0.1s ease;
+            margin: 0 auto;
+        }
+
+        #legal-app .live-controls {
+            padding: 1.5rem;
+            background: #1e293b;
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+
+        #legal-app .control-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: none;
+            background: #334155;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        #legal-app .control-btn.active {
+            background: #fff;
+            color: #0f172a;
+        }
+
+        #legal-app .control-btn.end-call {
+            background: #ef4444;
+            color: white;
+        }
+
+        #legal-app .control-btn.end-call:hover {
+            background: #dc2626;
+        }
+
         /* ANIMATIONS */
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        @keyframes expandLive { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
     </style>
 </head>
@@ -512,15 +642,58 @@
         <h3 style="color: #0f172a;">Analyzing Situation...</h3>
         <p style="color: #64748b;">Consulting legal knowledge base</p>
     </div>
+
+    <!-- Live Assistant FAB -->
+    <button id="liveFab" class="live-fab" title="Start Live Consultation">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M4.5 4.5a3 3 0 00-3 3v9a3 3 0 003 3h8.25a3 3 0 003-3v-9a3 3 0 00-3-3H4.5zM19.94 18.75l-2.69-2.69V7.94l2.69-2.69c.944-.945 2.56-.276 2.56 1.06v11.38c0 1.336-1.616 2.005-2.56 1.06z" />
+        </svg>
+    </button>
+
+    <!-- Live Assistant Interface -->
+    <div id="liveInterface" class="live-interface">
+        <div class="live-header">
+            <span style="font-weight: 600; font-size: 0.9rem;">Live Legal Assistant</span>
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+                 <span style="width: 8px; height: 8px; background: #22c55e; border-radius: 50%;"></span>
+                 <span style="font-size: 0.75rem;">Online</span>
+            </div>
+        </div>
+        <div class="live-video-container">
+            <video id="liveVideo" autoplay playsinline muted></video>
+            <canvas id="videoCanvas" style="display:none;"></canvas>
+            <div class="voice-indicator">
+                <div id="voiceBar" class="voice-bar"></div>
+            </div>
+        </div>
+        <div class="live-controls">
+             <button id="toggleMicBtn" class="control-btn active" title="Mute/Unmute">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                 </svg>
+             </button>
+             <button id="endLiveBtn" class="control-btn end-call" title="End Call">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                 </svg>
+             </button>
+        </div>
+    </div>
 </div>
 
 <script type="module">
-    import { GoogleGenAI } from "@google/genai";
+    import { GoogleGenAI, Modality } from "@google/genai";
 
     const state = {
         files: [],
         isLoading: false,
-        isListening: false
+        isListening: false,
+        liveSession: null,
+        audioContext: null,
+        inputSource: null,
+        processor: null,
+        videoInterval: null,
+        nextStartTime: 0
     };
 
     // DOM Elements
@@ -535,7 +708,15 @@
         summary: document.getElementById('resSummary'),
         rights: document.getElementById('resRights'),
         steps: document.getElementById('resSteps'),
-        disclaimer: document.getElementById('resDisclaimer')
+        disclaimer: document.getElementById('resDisclaimer'),
+        // Live UI
+        liveFab: document.getElementById('liveFab'),
+        liveInterface: document.getElementById('liveInterface'),
+        liveVideo: document.getElementById('liveVideo'),
+        videoCanvas: document.getElementById('videoCanvas'),
+        toggleMicBtn: document.getElementById('toggleMicBtn'),
+        endLiveBtn: document.getElementById('endLiveBtn'),
+        voiceBar: document.getElementById('voiceBar')
     };
 
     // --- Example Prompts ---
@@ -550,14 +731,14 @@
         els.input.focus();
     };
 
-    // --- Voice Input ---
+    // --- Standard Voice Input (Text Area) ---
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     let recognition;
 
     if (SpeechRecognition) {
         recognition = new SpeechRecognition();
         recognition.continuous = false;
-        recognition.lang = 'en-IN'; // Defaulting to Indian context as per app theme
+        recognition.lang = 'en-IN';
         recognition.interimResults = false;
 
         recognition.onstart = () => {
@@ -573,7 +754,6 @@
         recognition.onresult = (event) => {
             const transcript = event.results[0][0].transcript;
             const currentText = els.input.value;
-            // Append with space if needed
             els.input.value = currentText + (currentText.length > 0 ? ' ' : '') + transcript;
         };
 
@@ -585,7 +765,7 @@
             }
         });
     } else {
-        els.micBtn.style.display = 'none'; // Hide if not supported
+        els.micBtn.style.display = 'none';
     }
 
 
@@ -595,3 +775,305 @@
         for (const file of newFiles) {
             const base64 = await readFileAsBase64(file);
             state.files.push({ file, base64 });
+        }
+        renderFiles();
+    });
+
+    function readFileAsBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function renderFiles() {
+        els.fileList.innerHTML = '';
+        state.files.forEach((item, idx) => {
+            const tag = document.createElement('div');
+            tag.className = 'file-tag';
+            tag.innerHTML = `
+                <span>${item.file.name}</span>
+                <span style="cursor:pointer; color:#ef4444; font-weight:bold;" onclick="removeFile(${idx})">×</span>
+            `;
+            els.fileList.appendChild(tag);
+        });
+    }
+
+    window.removeFile = (idx) => {
+        state.files.splice(idx, 1);
+        renderFiles();
+    };
+
+    // --- Text Analysis Integration ---
+    els.analyzeBtn.addEventListener('click', async () => {
+        const text = els.input.value.trim();
+        if (!text && state.files.length === 0) {
+            alert('Please describe your situation or upload a document.');
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            
+            const parts = [];
+            if (text) parts.push({ text });
+            state.files.forEach(f => {
+                parts.push({
+                    inlineData: {
+                        mimeType: f.file.type,
+                        data: f.base64
+                    }
+                });
+            });
+
+            const systemInstruction = `
+            You are an AI Legal First Aid assistant. 
+            ROLE: Provide legal awareness, identify potential rights, and suggest immediate next steps.
+            JURISDICTION: Assume India unless context implies otherwise.
+            TONE: Professional, objective, calm, and empathetic.
+            CONSTRAINT: NEVER provide legal advice. Always end with a disclaimer.
+            OUTPUT FORMAT: JSON with keys: 'summary', 'rights' (array), 'steps' (array), 'disclaimer'.
+            `;
+
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: { parts },
+                config: {
+                    systemInstruction: systemInstruction,
+                    responseMimeType: "application/json"
+                }
+            });
+
+            if (response.text) {
+                const data = JSON.parse(response.text);
+                renderResults(data);
+            }
+
+        } catch (error) {
+            console.error(error);
+            alert('Analysis failed. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    });
+
+    function setLoading(loading) {
+        state.isLoading = loading;
+        if (loading) {
+            els.loading.classList.add('active');
+            els.analyzeBtn.disabled = true;
+        } else {
+            els.loading.classList.remove('active');
+            els.analyzeBtn.disabled = false;
+        }
+    }
+
+    function renderResults(data) {
+        els.summary.textContent = data.summary;
+        
+        els.rights.innerHTML = data.rights.map(r => `<li>${r}</li>`).join('');
+        els.steps.innerHTML = data.steps.map(s => `<li>${s}</li>`).join('');
+        els.disclaimer.textContent = data.disclaimer;
+
+        els.resultBox.style.display = 'block';
+        els.resultBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+
+    // --- REALTIME LIVE API LOGIC ---
+    
+    // Audio Conversion Helpers
+    function float32ToPCM16(float32Arr) {
+        const pcm16 = new Int16Array(float32Arr.length);
+        for (let i = 0; i < float32Arr.length; i++) {
+            let s = Math.max(-1, Math.min(1, float32Arr[i]));
+            pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+        }
+        return pcm16;
+    }
+
+    function base64Encode(buffer) {
+        let binary = '';
+        const bytes = new Uint8Array(buffer);
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        return window.btoa(binary);
+    }
+
+    function decodeAudioData(base64, ctx) {
+        const binaryString = atob(base64);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        const dataInt16 = new Int16Array(bytes.buffer);
+        // Output audio is 24kHz
+        const buffer = ctx.createBuffer(1, dataInt16.length, 24000); 
+        const channelData = buffer.getChannelData(0);
+        for (let i = 0; i < dataInt16.length; i++) {
+            channelData[i] = dataInt16[i] / 32768.0;
+        }
+        return buffer;
+    }
+
+    async function startLiveSession() {
+        try {
+            els.liveFab.style.display = 'none';
+            els.liveInterface.style.display = 'flex';
+            
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            
+            // Audio Contexts
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            state.audioContext = new AudioContext({ sampleRate: 16000 }); // Input req 16k
+            const outputCtx = new AudioContext({ sampleRate: 24000 }); // Output req 24k
+            state.nextStartTime = outputCtx.currentTime;
+
+            // Media Stream (Mic + Camera)
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+            els.liveVideo.srcObject = stream;
+
+            // Connect to Gemini Live
+            const sessionPromise = ai.live.connect({
+                model: 'gemini-2.5-flash-native-audio-preview-09-2025',
+                callbacks: {
+                    onopen: () => {
+                        console.log('Live Session Connected');
+                        
+                        // Setup Audio Input Processing
+                        state.inputSource = state.audioContext.createMediaStreamSource(stream);
+                        state.processor = state.audioContext.createScriptProcessor(4096, 1, 1);
+                        
+                        state.processor.onaudioprocess = (e) => {
+                            const inputData = e.inputBuffer.getChannelData(0);
+                            const pcm16 = float32ToPCM16(inputData);
+                            const base64Audio = base64Encode(pcm16.buffer);
+                            
+                            sessionPromise.then(session => {
+                                session.sendRealtimeInput({
+                                    media: {
+                                        mimeType: 'audio/pcm;rate=16000',
+                                        data: base64Audio
+                                    }
+                                });
+                            });
+                            
+                            // Visualizer update
+                            const vol = Math.abs(inputData[0]) * 100;
+                            els.voiceBar.style.width = Math.min(100, vol * 5) + '%';
+                        };
+
+                        state.inputSource.connect(state.processor);
+                        state.processor.connect(state.audioContext.destination);
+
+                        // Setup Video Input Processing (1 FPS)
+                        state.videoInterval = setInterval(() => {
+                            const ctx = els.videoCanvas.getContext('2d');
+                            els.videoCanvas.width = els.liveVideo.videoWidth;
+                            els.videoCanvas.height = els.liveVideo.videoHeight;
+                            ctx.drawImage(els.liveVideo, 0, 0);
+                            
+                            const base64Img = els.videoCanvas.toDataURL('image/jpeg', 0.5).split(',')[1];
+                            sessionPromise.then(session => {
+                                session.sendRealtimeInput({
+                                    media: {
+                                        mimeType: 'image/jpeg',
+                                        data: base64Img
+                                    }
+                                });
+                            });
+                        }, 1000);
+                    },
+                    onmessage: (msg) => {
+                        // Handle Audio Output
+                        const audioData = msg.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
+                        if (audioData) {
+                             const buffer = decodeAudioData(audioData, outputCtx);
+                             const source = outputCtx.createBufferSource();
+                             source.buffer = buffer;
+                             source.connect(outputCtx.destination);
+                             
+                             // Gapless playback logic
+                             const startTime = Math.max(outputCtx.currentTime, state.nextStartTime);
+                             source.start(startTime);
+                             state.nextStartTime = startTime + buffer.duration;
+                        }
+                    },
+                    onclose: () => {
+                        console.log('Live Session Closed');
+                        stopLiveSession();
+                    },
+                    onerror: (err) => {
+                        console.error('Live Error:', err);
+                        stopLiveSession();
+                    }
+                },
+                config: {
+                    responseModalities: [Modality.AUDIO],
+                    systemInstruction: "You are a helpful, professional legal assistant. You are seeing the user via video and hearing them. Answer briefly and helpfully about legal situations. Do not give legal advice, only awareness.",
+                    speechConfig: {
+                        voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } }
+                    }
+                }
+            });
+            
+            state.liveSession = sessionPromise;
+
+        } catch (err) {
+            console.error(err);
+            alert('Could not start live session. Please allow camera/microphone access.');
+            stopLiveSession();
+        }
+    }
+
+    function stopLiveSession() {
+        if (state.processor) {
+            state.processor.disconnect();
+            state.processor.onaudioprocess = null;
+        }
+        if (state.inputSource) state.inputSource.disconnect();
+        if (state.audioContext) state.audioContext.close();
+        if (state.videoInterval) clearInterval(state.videoInterval);
+        
+        // Stop Media Tracks
+        if (els.liveVideo.srcObject) {
+            els.liveVideo.srcObject.getTracks().forEach(track => track.stop());
+            els.liveVideo.srcObject = null;
+        }
+
+        els.liveInterface.style.display = 'none';
+        els.liveFab.style.display = 'flex';
+    }
+
+    // Live Controls
+    els.liveFab.addEventListener('click', startLiveSession);
+    
+    els.endLiveBtn.addEventListener('click', () => {
+        // We can't explicitly close the session object easily in the SDK wrapper without keeping ref to close() method 
+        // if it exposed it, but closing the view and stopping tracks effectively ends our side.
+        // Re-connecting will create a new session.
+        stopLiveSession();
+    });
+
+    els.toggleMicBtn.addEventListener('click', () => {
+        const tracks = els.liveVideo.srcObject?.getAudioTracks();
+        if (tracks && tracks.length > 0) {
+            const enabled = !tracks[0].enabled;
+            tracks[0].enabled = enabled;
+            els.toggleMicBtn.classList.toggle('active', enabled);
+            els.toggleMicBtn.innerHTML = enabled ? 
+                `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>` : 
+                `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clip-rule="evenodd" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>`;
+        }
+    });
+
+</script>
+</body>
+</html>
